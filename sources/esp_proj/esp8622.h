@@ -66,8 +66,8 @@ public:
 	bool comm_deep_sleep(int time_ms);
 	bool comm_set_echo(int enable);
 	bool comm_restore();
-	bool comm_get_uart(int &baudrate, int &databits, int &stopbits, int &parity, int &flowctrl, bool flash);
-	bool comm_set_uart(int baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash);
+	bool comm_get_uart(unsigned long &baudrate, int &databits, int &stopbits, int &parity, int &flowctrl, bool flash);
+	bool comm_set_uart(unsigned long baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash);
 	
 	bool comm_get_sleep_mode(int &mode);
 	bool comm_set_sleep_mode(int mode);

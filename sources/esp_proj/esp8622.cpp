@@ -45,7 +45,7 @@ bool CESP8622::comm_test()
 ****************************************************/
 bool CESP8622::comm_reset()
 {
-	String cmd = "AT+RST\r\n";
+	/*String cmd = "AT+RST\r\n";
 	if (!_cmd_send(cmd))
 		return false;
 
@@ -57,7 +57,7 @@ bool CESP8622::comm_reset()
 	if (result.startsWith("\r\nOK\r\n") && result.endsWith("\r\nready\r\n"))
 		return true;
 	
-	ESP_LOG(result);
+	ESP_LOG(result);*/
 	return false;
 }
 
@@ -117,7 +117,7 @@ bool CESP8622::comm_deep_sleep(int time_ms)
 bool CESP8622::comm_set_echo(int enable)
 {
 	String cmd = "";
-	if (enbale) {
+	if (enable) {
 		cmd = "ATE1\r\n";
 	}
 	else {
@@ -145,7 +145,7 @@ bool CESP8622::comm_set_echo(int enable)
 ****************************************************/
 bool CESP8622::comm_restore()
 {
-	String cmd = "AT+RESTORE\r\n";
+	/*String cmd = "AT+RESTORE\r\n";
 	if (!_cmd_send(cmd))
 		return false;
 	
@@ -156,7 +156,7 @@ bool CESP8622::comm_restore()
 	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 	
-	ESP_LOG(result);
+	ESP_LOG(result);*/
 	return false;
 }
 
@@ -173,7 +173,7 @@ bool CESP8622::comm_restore()
 * +UART_DEF:0,0,0,0,0
 * OK
 ****************************************************/
-bool CESP8622::comm_get_uart(int &baudrate, int &databits, int &stopbits, int &parity, 
+bool CESP8622::comm_get_uart(unsigned long &baudrate, int &databits, int &stopbits, int &parity, 
 	int &flowctrl, bool flash)
 {
 	String cmd = "";
@@ -237,7 +237,7 @@ bool CESP8622::comm_get_uart(int &baudrate, int &databits, int &stopbits, int &p
 * Response:
 * 	\r\nOK\r\n
 ****************************************************/
-bool CESP8622::comm_set_uart(int baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash)
+bool CESP8622::comm_set_uart(unsigned long baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash)
 {
 	String cmd = "";
 	if (flash) {
@@ -821,7 +821,7 @@ bool CESP8622::wifi_set_mode(int mode, bool flash)
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n")
+	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 
 	ESP_LOG(result);
@@ -879,7 +879,7 @@ bool CESP8622::wifi_station_status(String &ssid, String &bssid, int &channel, in
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n") {
+	if (result.endsWith("\r\nOK\r\n")) {
 		if (result.startsWith("+CWJAP_CUR:") || result.startsWith("+CWJAP_DEF:")) {
 			String param = result.substring(strlen("+CWJAP_CUR:"), result.length() - strlen("\r\nOK\r\n"));
 
@@ -950,7 +950,7 @@ bool CESP8622::wifi_station_connect(String ssid, String pwd, bool flash)
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n")
+	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 
 	ESP_LOG(result);
@@ -973,7 +973,7 @@ bool CESP8622::wifi_station_set_scan(int sort_enable, int mask)
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n")
+	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 
 	ESP_LOG(result);
@@ -1008,7 +1008,7 @@ bool CESP8622::wifi_station_scan(esp_wifi_info_t *wifi_list, int &count)
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n") {
+	if (result.endsWith("\r\nOK\r\n")) {
 		String param = result.substring(0, result.length() - strlen("\r\nOK\r\n"));
 
 		bool success = false;
@@ -1123,7 +1123,7 @@ bool CESP8622::wifi_station_scan(String ssid, String mac, esp_wifi_info_t &wifi_
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n") {
+	if (result.endsWith("\r\nOK\r\n")) {
 		if (result.startsWith("+CWLAP:")) {
 			String param = result.substring(strlen("+CWLAP:"), result.length() - strlen("\r\nOK\r\n"));
 			param.replace("(", " ");
@@ -1218,7 +1218,7 @@ bool CESP8622::wifi_station_disconnect()
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n")
+	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 
 	ESP_LOG(result);
@@ -1389,12 +1389,12 @@ bool CESP8622::wifi_softap_set_config(String ssid, String pwd, int channel, int 
 	String cmd = "";
 	if (flash) {
 		cmd = String("AT+CWSAP_DEF=") + ssid + String(",") + pwd + String(",") + String(channel)
-			+ String(",") + String(ecn) + String(",") + String(maxconn)
+			+ String(",") + String(enc) + String(",") + String(maxconn)
 			+ String(",") + String(ssid_hidden) + String("\r\n");
 	}
 	else {
 		cmd = String("AT+CWSAP_CUR=") + ssid + String(",") + pwd + String(",") + String(channel)
-			+ String(",") + String(ecn) + String(",") + String(maxconn)
+			+ String(",") + String(enc) + String(",") + String(maxconn)
 			+ String(",") + String(ssid_hidden) + String("\r\n");
 	}
 	if (!_cmd_send(cmd))
@@ -1404,7 +1404,7 @@ bool CESP8622::wifi_softap_set_config(String ssid, String pwd, int channel, int 
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n")
+	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 
 	ESP_LOG(result);
@@ -1428,11 +1428,12 @@ bool CESP8622::wifi_softap_get_station(esp_station_info_t *stations, int &count)
 	if (!_cmd_recv(result))
 		return false;
 
-	if (result.endsWith("\r\nOK\r\n") {
+	if (result.endsWith("\r\nOK\r\n")) {
 		String param = result.substring(0, result.length() - strlen("\r\nOK\r\n"));
 
-        count = 0;
-		while (param.startsWith("+CWLIF:"))
+    bool success = false;
+    count = 0;
+    while (param.startsWith("+CWLIF:"))
 		{
 			int next_index = param.indexOf("+CWLIF:", 1);
 			String item = "";
@@ -1443,26 +1444,26 @@ bool CESP8622::wifi_softap_get_station(esp_station_info_t *stations, int &count)
 				item = param.substring(0, next_index);
 			}
 			
-            item = item.substring(strlen("+CWLIF:"));
-            bool success = false;
-            int index = -1;
-            do {
-                index = item.indexOf(',');
-                if (-1 == index)
-                    break;
-                stations[count].ip_addr = item.substring(0, index);
-                item = item.substring(index + 1);
-                stations[count].mac = item;
+      item = item.substring(strlen("+CWLIF:"));
+      success = false;
+      int index = -1;
+      do {
+        index = item.indexOf(',');
+        if (-1 == index)
+          break;
+        stations[count].ip_addr = item.substring(0, index);
+        item = item.substring(index + 1);
+        stations[count].mac = item;
 
-                 count++;
-                 success = true;
-            } while(false);
-            if (!success)
-                break;
+        count++;
+        success = true;
+      } while(false);
+      if (!success)
+        break;
 
-            if (-1 == next_index)
-                break;
-            param = param.substring(next_index);
+      if (-1 == next_index)
+        break;
+      param = param.substring(next_index);
 		}
 
 		if (success)
