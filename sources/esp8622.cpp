@@ -836,7 +836,7 @@ bool CESP8622::wifi_set_mode(int mode, bool flash)
 ****************************************************/
 bool wifi_get_dhcp(int &value, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -847,7 +847,7 @@ bool wifi_get_dhcp(int &value, bool flash)
 ****************************************************/
 bool wifi_set_dhcp(int mode, int en, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1233,7 +1233,7 @@ bool CESP8622::wifi_station_disconnect()
 ****************************************************/
 bool wifi_station_set_auto_connect(int enable)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1244,7 +1244,7 @@ bool wifi_station_set_auto_connect(int enable)
 ****************************************************/
 bool wifi_station_get_mac(String &mac, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1255,7 +1255,7 @@ bool wifi_station_get_mac(String &mac, bool flash)
 ****************************************************/
 bool wifi_station_set_mac(String mac, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1266,7 +1266,7 @@ bool wifi_station_set_mac(String mac, bool flash)
 ****************************************************/
 bool wifi_station_get_ip(String &ip, String &gateway, String &netmask, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1277,7 +1277,7 @@ bool wifi_station_get_ip(String &ip, String &gateway, String &netmask, bool flas
 ****************************************************/
 bool wifi_station_set_ip(String ip, String gateway, String netmask, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1288,7 +1288,7 @@ bool wifi_station_set_ip(String ip, String gateway, String netmask, bool flash)
 ****************************************************/
 bool wifi_station_get_hostname(String &name)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1299,7 +1299,7 @@ bool wifi_station_get_hostname(String &name)
 ****************************************************/
 bool wifi_station_set_hostname(String name)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1504,6 +1504,7 @@ bool wifi_softap_get_dhcp_ranges(int &lease_time, String &start_ip, String &end_
 
 	ESP_LOG(result);
 	return false;*/
+    return false;
 }
 
 /***************************************************
@@ -1514,7 +1515,7 @@ bool wifi_softap_get_dhcp_ranges(int &lease_time, String &start_ip, String &end_
 ****************************************************/
 bool wifi_softap_set_dhcp_ranges(int enable, int lease_time, String start_ip, String end_ip, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1525,7 +1526,7 @@ bool wifi_softap_set_dhcp_ranges(int enable, int lease_time, String start_ip, St
 ****************************************************/
 bool wifi_softap_get_mac(String &mac, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1536,7 +1537,7 @@ bool wifi_softap_get_mac(String &mac, bool flash)
 ****************************************************/
 bool wifi_softap_set_mac(String mac, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1547,7 +1548,7 @@ bool wifi_softap_set_mac(String mac, bool flash)
 ****************************************************/
 bool wifi_softap_get_ip(String &ip, String &gateway, String &netmask, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1558,7 +1559,7 @@ bool wifi_softap_get_ip(String &ip, String &gateway, String &netmask, bool flash
 ****************************************************/
 bool wifi_softap_set_ip(String ip, String gateway, String netmask, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1569,7 +1570,7 @@ bool wifi_softap_set_ip(String ip, String gateway, String netmask, bool flash)
 ****************************************************/
 bool wifi_start_smart(int type)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1580,7 +1581,7 @@ bool wifi_start_smart(int type)
 ****************************************************/
 bool wifi_stop_smart()
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1591,7 +1592,7 @@ bool wifi_stop_smart()
 ****************************************************/
 bool wifi_set_wps(int enable)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1602,7 +1603,7 @@ bool wifi_set_wps(int enable)
 ****************************************************/
 bool wifi_set_mdns(int enable, String hostname, String server_name, int server_port)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1613,7 +1614,7 @@ bool wifi_set_mdns(int enable, String hostname, String server_name, int server_p
 ****************************************************/
 bool wifi_get_country(int &policy, int &code, int &start_channel, int &channel_count, bool flash)
 {
-
+    return false;
 }
 
 /***************************************************
@@ -1624,7 +1625,7 @@ bool wifi_get_country(int &policy, int &code, int &start_channel, int &channel_c
 ****************************************************/
 bool wifi_set_country(int policy, int code, int start_channel, int channel_count, bool flash)
 {
-
+    return false;
 }
 
 
