@@ -1431,6 +1431,7 @@ bool CESP8622::wifi_softap_get_station(esp_station_info_t *stations, int &count)
 	if (result.endsWith("\r\nOK\r\n") {
 		String param = result.substring(0, result.length() - strlen("\r\nOK\r\n"));
 
+        count = 0;
 		while (param.startsWith("+CWLIF:"))
 		{
 			int next_index = param.indexOf("+CWLIF:", 1);
@@ -1442,11 +1443,30 @@ bool CESP8622::wifi_softap_get_station(esp_station_info_t *stations, int &count)
 				item = param.substring(0, next_index);
 			}
 			
-			
+            item = item.substring(strlen("+CWLIF:"));
+            bool success = false;
+            int index = -1;
+            do {
+                index = item.indexOf(',');
+                if (-1 == index)
+                    break;
+                stations[count].ip_addr = item.substring(0, index);
+                item = item.substring(index + 1);
+                stations[count].mac = item;
+
+                 count++;
+                 success = true;
+            } while(false);
+            if (!success)
+                break;
+
+            if (-1 == next_index)
+                break;
+            param = param.substring(next_index);
 		}
 
-		if (result.startsWith(""))
-		return true;
+		if (success)
+		    return true;
 	}
 
 	ESP_LOG(result);
@@ -1455,13 +1475,35 @@ bool CESP8622::wifi_softap_get_station(esp_station_info_t *stations, int &count)
 
 /***************************************************
 * Command:
-*
+*   AT+CWDHCPS_CUR?
 * Response:
-*
+*   +CWDHCPS_CUR=<lease	time>,<start IP>,<end IP>
 ****************************************************/
 bool wifi_softap_get_dhcp_ranges(int &lease_time, String &start_ip, String &end_ip, bool flash)
 {
+    /*String cmd = "";
+	if (flash) {
+		cmd = String("AT+CWSAP_DEF=") + ssid + String(",") + pwd + String(",") + String(channel)
+			+ String(",") + String(ecn) + String(",") + String(maxconn)
+			+ String(",") + String(ssid_hidden) + String("\r\n");
+	}
+	else {
+		cmd = String("AT+CWSAP_CUR=") + ssid + String(",") + pwd + String(",") + String(channel)
+			+ String(",") + String(ecn) + String(",") + String(maxconn)
+			+ String(",") + String(ssid_hidden) + String("\r\n");
+	}
+	if (!_cmd_send(cmd))
+		return false;
 
+	String result = "";
+	if (!_cmd_recv(result))
+		return false;
+
+	if (result.endsWith("\r\nOK\r\n")
+		return true;
+
+	ESP_LOG(result);
+	return false;*/
 }
 
 /***************************************************
