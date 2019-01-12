@@ -22,7 +22,7 @@ void CESP8622::setup()
 ****************************************************/
 bool CESP8622::comm_test()
 {
-	String cmd = "AT\r\n";
+	String cmd = String("AT\r\n");
 	if (!_cmd_send(cmd))
 		return false;
 		
@@ -45,7 +45,7 @@ bool CESP8622::comm_test()
 ****************************************************/
 bool CESP8622::comm_reset()
 {
-	/*String cmd = "AT+RST\r\n";
+	String cmd = String("AT+RST\r\n");
 	if (!_cmd_send(cmd))
 		return false;
 
@@ -57,7 +57,7 @@ bool CESP8622::comm_reset()
 	if (result.startsWith("\r\nOK\r\n") && result.endsWith("\r\nready\r\n"))
 		return true;
 	
-	ESP_LOG(result);*/
+	ESP_LOG(result);
 	return false;
 }
 
@@ -65,22 +65,14 @@ bool CESP8622::comm_reset()
 * Command:
 * 	AT+GMR\r\n
 * Response:
-* 	<AT version info>
-* 	<SDK version info>
-* 	<compile time>
-* 	<Bin version>
+* 	<AT version info>\r\n +
+* 	<SDK version info>\r\n +
+* 	<compile time>\r\n +
 * 	\r\nOK\r\n
-*
-* Example:
-* AT version:1.6.2.0(Apr 13 2018 11:10:59)
-* SDK version:2.2.1(6ab97e9)
-* compile time:Jun  7 2018 19:34:29
-* Bin version(Wroom 02):1.6.2
-* OK
 ****************************************************/
 bool CESP8622::comm_get_version(String &ver)
 {
-	String cmd = "AT+GMR\r\n";
+	String cmd = String("AT+GMR\r\n");
 	if (!_cmd_send(cmd))
 		return false;
 		
@@ -101,10 +93,23 @@ bool CESP8622::comm_get_version(String &ver)
 * Command:
 * 	AT+GSLP\r\n
 * Response:
-* 	...
+* 	<time>\r\n +
+* 	\r\nOK\r\n
 ****************************************************/
 bool CESP8622::comm_deep_sleep(int time_ms)
 {
+	String cmd = String("AT+GSLP=") + String(time_ms) + "\r\n";
+	if (!_cmd_send(cmd))
+		return false;
+		
+	String result = "";
+	if (!_cmd_recv(result))
+		return false;
+
+	if (result.endsWith("\r\nOK\r\n"))
+		return true;
+	
+	ESP_LOG(result);
 	return false;
 }
 
@@ -118,10 +123,10 @@ bool CESP8622::comm_set_echo(int enable)
 {
 	String cmd = "";
 	if (enable) {
-		cmd = "ATE1\r\n";
+		cmd = String("ATE1\r\n");
 	}
 	else {
-		cmd = "ATE0\r\n";
+		cmd = String("ATE0\r\n");
 	}
 	if (!_cmd_send(cmd))
 		return false;
@@ -145,7 +150,7 @@ bool CESP8622::comm_set_echo(int enable)
 ****************************************************/
 bool CESP8622::comm_restore()
 {
-	/*String cmd = "AT+RESTORE\r\n";
+	String cmd = String("AT+RESTORE\r\n");
 	if (!_cmd_send(cmd))
 		return false;
 	
@@ -156,7 +161,7 @@ bool CESP8622::comm_restore()
 	if (result.endsWith("\r\nOK\r\n"))
 		return true;
 	
-	ESP_LOG(result);*/
+	ESP_LOG(result);
 	return false;
 }
 
@@ -164,24 +169,18 @@ bool CESP8622::comm_restore()
 * Command:
 * 	AT+UART_CUR?\r\n or AT+UART_DEF?\r\n
 * Response:
-* 	+UART_CUR/DEF:<baudrate>,<databits>,<stopbits>,<parity>,<flow control>
+* 	+UART_CUR/DEF:<baudrate>,<databits>,<stopbits>,<parity>,<flow control> +
 * 	\r\nOK\r\n
-*
-* Example:
-* +UART_CUR:115273,8,1,0,1
-* OK
-* +UART_DEF:0,0,0,0,0
-* OK
 ****************************************************/
-bool CESP8622::comm_get_uart(unsigned long &baudrate, int &databits, int &stopbits, int &parity, 
+bool CESP8622::comm_get_uart(long &baudrate, int &databits, int &stopbits, int &parity, 
 	int &flowctrl, bool flash)
 {
 	String cmd = "";
 	if (flash) {
-		cmd = "AT+UART_DEF?\r\n";
+		cmd = String("AT+UART_DEF?\r\n");
 	}
 	else {
-		cmd = "AT+UART_CUR?\r\n";
+		cmd = String("AT+UART_CUR?\r\n");
 	}
 	if (!_cmd_send(cmd))
 		return false;
@@ -237,7 +236,7 @@ bool CESP8622::comm_get_uart(unsigned long &baudrate, int &databits, int &stopbi
 * Response:
 * 	\r\nOK\r\n
 ****************************************************/
-bool CESP8622::comm_set_uart(unsigned long baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash)
+bool CESP8622::comm_set_uart(long baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash)
 {
 	String cmd = "";
 	if (flash) {
@@ -268,16 +267,12 @@ bool CESP8622::comm_set_uart(unsigned long baudrate, int databits, int stopbits,
 * Command:
 * 	AT+SLEEP?\r\n
 * Response:
-* 	+SLEEP:<mode>
+* 	+SLEEP:<mode> +
 * 	\r\nOK\r\n
-*
-* Example:
-* 	+SLEEP:2
-* 	OK
 ****************************************************/
 bool CESP8622::comm_get_sleep_mode(int &mode)
 {
-	String cmd = "AT+SLEEP?\r\n";
+	String cmd = String("AT+SLEEP?\r\n");
 	if (!_cmd_send(cmd))
 		return false;
 	
@@ -299,7 +294,7 @@ bool CESP8622::comm_get_sleep_mode(int &mode)
 * Command:
 * 	AT+SLEEP=<mode>\r\n
 * Response:
-* 	\r\nERROR\r\n
+* 	\r\nERROR\r\n or
 * 	\r\nOK\r\n
 ****************************************************/
 bool CESP8622::comm_set_sleep_mode(int mode)
@@ -371,12 +366,8 @@ bool CESP8622::comm_set_rfpower(int power)
 * Command:
 * 	 AT+RFVDD?\r\n
 * Response:
-* 	+RFVDD:<VDD33>
+* 	+RFVDD:<VDD33> +
 * 	\r\nOK\r\n
-*
-* EXample:
-* +RFVDD:65535
-* OK
 ****************************************************/
 bool CESP8622::comm_get_rfvdd33(int &value)
 {
@@ -446,63 +437,9 @@ bool CESP8622::comm_set_rfvdd33_auto()
 
 /***************************************************
 * Command:
-* 	 AT+RFAUTOTRACE?\r\n
-* Response:
-* 	+RFAUTOTRACE:<enable>
-* 	\r\nOK\r\n
-*
-* Example:
-* +RFAUTOTRACE:1
-* OK
-****************************************************/
-bool CESP8622::comm_get_rfautotrace(int &value)
-{
-	String cmd = String("AT+RFAUTOTRACE?\r\n");
-	if (!_cmd_send(cmd))
-		return false;
-	
-	String result = "";
-	if (!_cmd_recv(result))
-		return false;
-
-	if (result.startsWith("+RFAUTOTRACE:") && result.endsWith("\r\nOK\r\n")) {
-		String param = result.substring(strlen("+RFAUTOTRACE:"), result.length() - strlen("\r\nOK\r\n"));
-		value = param.toInt();
-		return true;
-	}
-
-	ESP_LOG(result);
-	return false;
-}
-
-/***************************************************
-* Command:
-* 	 AT+RFAUTOTRACE=<enable>\r\n
-* Response:
-* 	\r\nOK\r\n
-****************************************************/
-bool CESP8622::comm_set_rfautotrace(int value)
-{
-	String cmd = String("AT+RFAUTOTRACE=") + String(value) + String("\r\n");
-	if (!_cmd_send(cmd))
-		return false;
-	
-	String result = "";
-	if (!_cmd_recv(result))
-		return false;
-
-	if (result.endsWith("\r\nOK\r\n"))
-		return true;
-
-	ESP_LOG(result);
-	return false;
-}
-
-/***************************************************
-* Command:
 * 	 AT+SYSRAM?\r\n
 * Response:
-* 	+SYSRAM:<RAM>
+* 	+SYSRAM:<RAM> +
 * 	\r\nOK\r\n
 ****************************************************/
 bool CESP8622::comm_query_sysram(int &value)
@@ -529,7 +466,7 @@ bool CESP8622::comm_query_sysram(int &value)
 * Command:
 * 	 AT+SYSADC?\r\n
 * Response:
-* 	+SYSADC:<ADC>
+* 	+SYSADC:<ADC> +
 * 	\r\nOK\r\n
 ****************************************************/
 bool CESP8622::comm_quary_adc(int &value)
@@ -556,12 +493,8 @@ bool CESP8622::comm_quary_adc(int &value)
 * Command:
 * 	 AT+SYSIOGETCFG=<pin>\r\n
 * Response:
-* 	+SYSIOGETCFG:<pin>,<mode>,<pull-up> 
+* 	+SYSIOGETCFG:<pin>,<mode>,<pull-up> +
 * 	\r\nOK\r\n
-*
-* Example:
-* +SYSIOGETCFG:1,0,0
-* OK
 ****************************************************/
 bool CESP8622::comm_get_ioconfig(int pin, int &mode, int &pull_up)
 {
@@ -628,14 +561,42 @@ bool CESP8622::comm_set_ioconfig(int pin, int mode, int pull_up)
 
 /***************************************************
 * Command:
-* 	 AT+SYSGPIOREAD=<pin>\r\n
+* 	 AT+SYSGPIODIR=<pin>,<dir>\r\n
 * Response:
-* 	+SYSGPIOREAD:<pin>,<dir>,<level>
 * 	\r\nOK\r\n
 *
 * 	or
 *
-* 	NOT	GPIO MODE！
+* 	NOT	GPIO MODE! +
+* 	\r\nERROR\r\n
+****************************************************/
+bool CESP8622::comm_set_iodir(int pin, int dir)
+{
+	String cmd = String("AT+SYSGPIODIR=") + String(pin) + String(",") + String(dir) + String("\r\n");
+	if (!_cmd_send(cmd))
+		return false;
+	
+	String result = "";
+	if (!_cmd_recv(result))
+		return false;
+
+	if (result.endsWith("\r\nOK\r\n")) 
+		return true;
+
+	ESP_LOG(result);
+	return false;
+}
+
+/***************************************************
+* Command:
+* 	 AT+SYSGPIOREAD=<pin>\r\n
+* Response:
+* 	+SYSGPIOREAD:<pin>,<dir>,<level> +
+* 	\r\nOK\r\n
+*
+* 	or
+*
+* 	NOT	GPIO MODE! +
 * 	\r\nERROR\r\n
 ****************************************************/
 bool CESP8622::comm_get_iostatus(int pin, int &dir, int &level)
@@ -679,41 +640,13 @@ bool CESP8622::comm_get_iostatus(int pin, int &dir, int &level)
 
 /***************************************************
 * Command:
-* 	 AT+SYSGPIODIR=<pin>,<dir>\r\n
-* Response:
-* 	\r\nOK\r\n
-*
-* 	or
-*
-* 	NOT	GPIO MODE！
-* 	\r\nERROR\r\n
-****************************************************/
-bool CESP8622::comm_set_iodir(int pin, int dir)
-{
-	String cmd = String("AT+SYSGPIODIR=") + String(pin) + String(",") + String(dir) + String("\r\n");
-	if (!_cmd_send(cmd))
-		return false;
-	
-	String result = "";
-	if (!_cmd_recv(result))
-		return false;
-
-	if (result.endsWith("\r\nOK\r\n")) 
-		return true;
-
-	ESP_LOG(result);
-	return false;
-}
-
-/***************************************************
-* Command:
 * 	 AT+SYSGPIOWRITE=<pin>,<level>\r\n
 * Response:
 * 	\r\nOK\r\n
 *
 * 	or
 *
-* 	NOT	OUTPUT!
+* 	NOT	OUTPUT! +
 * 	\r\nERROR\r\n
 ****************************************************/
 bool CESP8622::comm_set_iolevel(int pin, int level)
@@ -768,7 +701,7 @@ bool CESP8622::comm_set_sysmsg(int value, bool flash)
 * 	AT+CWMODE_CUR?\r\n		or
 * 	AT_CWMODE_DEF?\r\n
 * Response:
-* 	+CWMODE_CUR/DEF:<mode>
+* 	+CWMODE_CUR/DEF:<mode> +
 * 	\r\nOK\r\n
 ****************************************************/
 bool CESP8622::wifi_get_mode(int &mode, bool flash)
@@ -867,10 +800,10 @@ bool CESP8622::wifi_station_status(String &ssid, String &bssid, int &channel, in
 {
 	String cmd = "";
 	if (flash) {
-		cmd = "AT_CWJAP_DEF?\r\n";
+		cmd = String("AT_CWJAP_DEF?\r\n");
 	}
 	else {
-		cmd = "AT+CWJAP_CUR?\r\n";
+		cmd = String("AT+CWJAP_CUR?\r\n");
 	}
 	if (!_cmd_send(cmd))
 		return false;
@@ -1480,7 +1413,7 @@ bool CESP8622::wifi_softap_get_station(esp_station_info_t *stations, int &count)
 * Response:
 *   +CWDHCPS_CUR=<lease	time>,<start IP>,<end IP>
 ****************************************************/
-bool wifi_softap_get_dhcp_ranges(int &lease_time, String &start_ip, String &end_ip, bool flash)
+bool CESP8622::wifi_softap_get_dhcp_ranges(int &lease_time, String &start_ip, String &end_ip, bool flash)
 {
     /*String cmd = "";
 	if (flash) {
@@ -1514,7 +1447,7 @@ bool wifi_softap_get_dhcp_ranges(int &lease_time, String &start_ip, String &end_
 * Response:
 *
 ****************************************************/
-bool wifi_softap_set_dhcp_ranges(int enable, int lease_time, String start_ip, String end_ip, bool flash)
+bool CESP8622::wifi_softap_set_dhcp_ranges(int enable, int lease_time, String start_ip, String end_ip, bool flash)
 {
     return false;
 }
@@ -1525,7 +1458,7 @@ bool wifi_softap_set_dhcp_ranges(int enable, int lease_time, String start_ip, St
 * Response:
 *
 ****************************************************/
-bool wifi_softap_get_mac(String &mac, bool flash)
+bool CESP8622::wifi_softap_get_mac(String &mac, bool flash)
 {
     return false;
 }
@@ -1536,7 +1469,7 @@ bool wifi_softap_get_mac(String &mac, bool flash)
 * Response:
 *
 ****************************************************/
-bool wifi_softap_set_mac(String mac, bool flash)
+bool CESP8622::wifi_softap_set_mac(String mac, bool flash)
 {
     return false;
 }
@@ -1547,7 +1480,7 @@ bool wifi_softap_set_mac(String mac, bool flash)
 * Response:
 *
 ****************************************************/
-bool wifi_softap_get_ip(String &ip, String &gateway, String &netmask, bool flash)
+bool CESP8622::wifi_softap_get_ip(String &ip, String &gateway, String &netmask, bool flash)
 {
     return false;
 }
@@ -1558,7 +1491,7 @@ bool wifi_softap_get_ip(String &ip, String &gateway, String &netmask, bool flash
 * Response:
 *
 ****************************************************/
-bool wifi_softap_set_ip(String ip, String gateway, String netmask, bool flash)
+bool CESP8622::wifi_softap_set_ip(String ip, String gateway, String netmask, bool flash)
 {
     return false;
 }
@@ -1569,7 +1502,7 @@ bool wifi_softap_set_ip(String ip, String gateway, String netmask, bool flash)
 * Response:
 *
 ****************************************************/
-bool wifi_start_smart(int type)
+bool CESP8622::wifi_start_smart(int type)
 {
     return false;
 }
@@ -1580,7 +1513,7 @@ bool wifi_start_smart(int type)
 * Response:
 *
 ****************************************************/
-bool wifi_stop_smart()
+bool CESP8622::wifi_stop_smart()
 {
     return false;
 }
@@ -1591,7 +1524,7 @@ bool wifi_stop_smart()
 * Response:
 *
 ****************************************************/
-bool wifi_set_wps(int enable)
+bool CESP8622::wifi_set_wps(int enable)
 {
     return false;
 }
@@ -1602,7 +1535,7 @@ bool wifi_set_wps(int enable)
 * Response:
 *
 ****************************************************/
-bool wifi_set_mdns(int enable, String hostname, String server_name, int server_port)
+bool CESP8622::wifi_set_mdns(int enable, String hostname, String server_name, int server_port)
 {
     return false;
 }
@@ -1613,7 +1546,7 @@ bool wifi_set_mdns(int enable, String hostname, String server_name, int server_p
 * Response:
 *
 ****************************************************/
-bool wifi_get_country(int &policy, int &code, int &start_channel, int &channel_count, bool flash)
+bool CESP8622::wifi_get_country(int &policy, int &code, int &start_channel, int &channel_count, bool flash)
 {
     return false;
 }
@@ -1624,9 +1557,405 @@ bool wifi_get_country(int &policy, int &code, int &start_channel, int &channel_c
 * Response:
 *
 ****************************************************/
-bool wifi_set_country(int policy, int code, int start_channel, int channel_count, bool flash)
+bool CESP8622::wifi_set_country(int policy, int code, int start_channel, int channel_count, bool flash)
 {
     return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_status(int &stat, esp_tcpip_info_t *status, int &count)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_domain(String domain, String &ip)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_tcp_connect(int link_id, String type, String remote_ip, int remote_port, int alive)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_udp_connect(int link_id, String type, String remote_ip, int remote_port, int local_port, int mode)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_tcp_send(int link_id, String data)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_udp_send(int link_id, String data, String remote_ip, int remote_port)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_send_passthrough(String data)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_tcp_send(int link_id, String data)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_udp_send(int link_id, String data, String remote_ip, int remote_port)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_sendbuf(int link_id, String data, int &seg_id)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_resetbuf(int link_id)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_bufstatus(int link_id)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_checkseg(int link_id, int seg_id)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_closemode(int link_id, int abord)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_disconnect(int link_id)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_query_ips(String &station_ip, String &station_mac, String &ap_ip, String &ap_mac)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_multi(int &mode)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_multi(int mode)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_setup_tcpserver(int mode, int port)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_server_maxlinks(int &value)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_server_maxlinks(int value)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_server_timeout(int &timeout_sec)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_server_timeout(int &timeout_sec)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_send_mode(int &value, bool flash)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_send_mode(int value, bool flash)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_ping(String ip)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_recv_info(int enable)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_recv_mode(int mode)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_recv_callback(String &data)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_recv(int len, String &data)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_recvlen(int &len0, int &len1, int &len2, int &len3, int &len4)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_sntp_config()
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_sntp_config()
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_sntp_time(String time)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_get_dns(String &dns1, String &dns2, bool flash)
+{
+	return false;
+}
+
+/***************************************************
+* Command:
+*
+* Response:
+*
+****************************************************/
+bool CESP8622::tcpip_set_dns(int enable, String dns1, String dns2, bool flash)
+{
+	return false;
 }
 
 

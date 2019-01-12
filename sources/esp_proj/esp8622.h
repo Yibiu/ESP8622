@@ -4,7 +4,7 @@
 #include <Arduino.h>
 /*******************************************************
 # Version: 1.0.0
-* AT command based. (4a-esp8266_at_instruction_set_cn.pdf) 2018.8.17
+* AT command based. (2019.1.12_V1.6.2)
 * 
 * Serial:
 * 	Serial0: used for logger
@@ -15,9 +15,10 @@
 ********************************************************/
 
 
+#define ESP_MAX_WIFI_COUNT	64
+
 #define ESP_LOG(str)	Serial.println(String("[ESP_LOG]: ") + String(str));
 
-#define ESP_MAX_WIFI_COUNT	64
 
 typedef struct _esp_wifi_info
 {
@@ -66,8 +67,8 @@ public:
 	bool comm_deep_sleep(int time_ms);
 	bool comm_set_echo(int enable);
 	bool comm_restore();
-	bool comm_get_uart(unsigned long &baudrate, int &databits, int &stopbits, int &parity, int &flowctrl, bool flash);
-	bool comm_set_uart(unsigned long baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash);
+	bool comm_get_uart(long &baudrate, int &databits, int &stopbits, int &parity, int &flowctrl, bool flash);
+	bool comm_set_uart(long baudrate, int databits, int stopbits, int parity, int flowctrl, bool flash);
 	
 	bool comm_get_sleep_mode(int &mode);
 	bool comm_set_sleep_mode(int mode);
@@ -77,16 +78,14 @@ public:
 	bool comm_get_rfvdd33(int &value);
 	bool comm_set_rfvdd33(int value);
 	bool comm_set_rfvdd33_auto();
-	bool comm_get_rfautotrace(int &value);
-	bool comm_set_rfautotrace(int value);
 
 	bool comm_query_sysram(int &value);
 	bool comm_quary_adc(int &value);
 	
 	bool comm_get_ioconfig(int pin, int &mode, int &pull_up);
 	bool comm_set_ioconfig(int pin, int mode, int pull_up);
-	bool comm_get_iostatus(int pin, int &dir, int &level);
 	bool comm_set_iodir(int pin, int dir);
+	bool comm_get_iostatus(int pin, int &dir, int &level);
 	bool comm_set_iolevel(int pin, int level);
 
 	bool comm_set_sysmsg(int value, bool flash);
@@ -130,46 +129,48 @@ public:
 	bool wifi_get_country(int &policy, int &code, int &start_channel, int &channel_count, bool flash);
 	bool wifi_set_country(int policy, int code, int start_channel, int channel_count, bool flash);
 
-
-	/*
 	// TCP/IP AT
 	bool tcpip_get_status(int &stat, esp_tcpip_info_t *status, int &count);
 	bool tcpip_domain(String domain, String &ip);
-	bool tcpip_connect(int link_id, String type, String remote_ip, int remote_port);
-	bool tcpip_send(int link_id, int length, String remote_ip, int remote_port);
-	bool tcpip_send();// pass-through
-	bool tcpip_sendex();// normal transfer
-
-	bool tcpip_sendbuf();
-	bool tcpip_resetbuf();
-	bool tcpip_bufstatus();
-	bool tcpip_checkseg();
-
+	bool tcpip_tcp_connect(int link_id, String type, String remote_ip, int remote_port, int alive);
+	bool tcpip_udp_connect(int link_id, String type, String remote_ip, int remote_port, int local_port, int mode);
+	bool tcpip_tcp_send(int link_id, String data);
+	bool tcpip_udp_send(int link_id, String data, String remote_ip, int remote_port);
+	bool tcpip_send_passthrough(String data);
+	bool tcpip_tcp_send(int link_id, String data);
+	bool tcpip_udp_send(int link_id, String data, String remote_ip, int remote_port);
+	bool tcpip_sendbuf(int link_id, String data, int &seg_id);
+	bool tcpip_resetbuf(int link_id);
+	bool tcpip_bufstatus(int link_id);
+	bool tcpip_checkseg(int link_id, int seg_id);
+	bool tcpip_set_closemode(int link_id, int abord);
 	bool tcpip_disconnect(int link_id);
-	bool tcpip_query_ips();
+	bool tcpip_query_ips(String &station_ip, String &station_mac, String &ap_ip, String &ap_mac);
 	bool tcpip_get_multi(int &mode);
 	bool tcpip_set_multi(int mode);
 
-	bool tcpip_setup_tcpserver();
+	bool tcpip_setup_tcpserver(int mode, int port);
 	bool tcpip_get_server_maxlinks(int &value);
 	bool tcpip_set_server_maxlinks(int value);
 	bool tcpip_get_server_timeout(int &timeout_sec);
 	bool tcpip_set_server_timeout(int &timeout_sec);
 
-	bool tcpip_get_passthrough(int &value, bool flash);
-	bool tcpip_set_passthrough(int value, bool flash);
+	bool tcpip_get_send_mode(int &value, bool flash);
+	bool tcpip_set_send_mode(int value, bool flash);
+	bool tcpip_set_recv_info(int enable);
+	bool tcpip_get_recv_mode(int &mode);
+	bool tcpip_set_recv_mode(int mode);
+	bool tcpip_recv_callback(String &data);
+	bool tcpip_recv(int len, String &data);
+	bool tcpip_get_recvlen(int &len0, int &len1, int &len2, int &len3, int &len4);
 
 	bool tcpip_ping(String ip);
-	bool tcpip_set_receive_info(int enable);
-	//+
-
 	bool tcpip_get_sntp_config();
-	bool tcpip_get_sntp_config();
+	bool tcpip_set_sntp_config();
 	bool tcpip_get_sntp_time(String time);
 
-	bool tcpip_get_dns(bool flash);
-	bool tcpip_set_dns(bool flash);
-	*/
+	bool tcpip_get_dns(String &dns1, String &dns2, bool flash);
+	bool tcpip_set_dns(int enable, String dns1, String dns2, bool flash);
 
 protected:
 	bool _cmd_send(String cmd);
