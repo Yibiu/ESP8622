@@ -12,6 +12,7 @@ void setup() {
   Wire.begin();
   lcd.begin(16, 2);
   lcd.print("hello world!");
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -33,6 +34,12 @@ void loop() {
   lcd.print(minute < 10 ? "0" + String(minute) : String(minute));
   lcd.print(":");
   lcd.print(second < 10 ? "0" + String(second) : String(second));
+
+  Serial.print(hour < 10 ? "0" + String(hour) : String(hour));
+  Serial.print(":");
+  Serial.print(minute < 10 ? "0" + String(minute) : String(minute));
+  Serial.print(":");
+  Serial.print(second < 10 ? "0" + String(second) : String(second));
 
   delay(100);
 }
