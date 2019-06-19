@@ -11,6 +11,21 @@
 * @date: 2019.6.19
 * @brief:
 * 时钟芯片DS3231驱动程序，采用IIC协议。
+* Alarm Mask:
+*	Dy	A1M4	A1M3	A1M2	A1M1	Rate
+*	X	1		1		1		1		Once per second
+*	X	1		1		1		0		Alarm when seconds match
+*	X	1		1		0		0		Alarm when min, sec match
+*	X	1		0		0		0		Alarm when hour, min, sec match
+*	0	0		0		0		0		Alarm when date, h, m, s match
+*	1	0		0		0		0		Alarm when DoW, h, m, s match
+*
+*	Dy	A2M4	A2M3	A2M2	Rate
+*	X	1		1		1		Once per minute (at seconds = 00)
+*	X	1		1		0		Alarm when minutes match
+*	X	1		0		0		Alarm when hours and minutes match
+*	0	0		0		0		Alarm when date, hour, min match
+*	1	0		0		0		Alarm when DoW, hour, min match
 * 
 * 1. IIC器件地址0x68
 * 1. Hour: 12小时制和24小时制
