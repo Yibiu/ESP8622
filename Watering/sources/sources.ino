@@ -123,27 +123,24 @@ void loop() {
   else if (STATE_SETTING == state) {
     int key = scan();
 
-    /*
     switch (key)
     {
-    case 0:
-      Serial.println("KEY_NONE");
+    case KEY_NONE:
       break;
-    case 1:
+    case KEY_MODE:
       Serial.println("KEY_MODE");
       break;
-    case 2:
+    case KEY_PLUS:
       Serial.println("KEY_PLUS");
       break;
-    case 3:
+    case KEY_MINUS:
       Serial.println("KEY_MINUS");
       break;
-    case 4:
+    case KEY_OK:
       Serial.println("KEY_OK");
       break;
     default:
       break;
     }
-    */
   }
 }
