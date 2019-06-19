@@ -1,9 +1,11 @@
-#include <Wire.h>
 #include <LiquidCrystal.h>
 #include "DS3231.h"
 
-CDS3231 ds;
+// LCD1602
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+
+// DS3231
+CDS3231 ds;
 
 void setup() {
   // put your setup code here, to run once:
@@ -23,18 +25,14 @@ void loop() {
   hour = ds.get_hour(h12, PM);
   minute = ds.get_minute();
   second = ds.get_second();
+
   //lcd.clear();
   lcd.setCursor(0, 1);
-  if (hour < 10)
-    lcd.print("0");
-  lcd.print(String(hour));
+  lcd.print(hour < 10 ? "0" + String(hour) : String(hour));
   lcd.print(":");
-  if (minute < 10)
-    lcd.print("0");
-  lcd.print(String(minute));
+  lcd.print(minute < 10 ? "0" + String(minute) : String(minute));
   lcd.print(":");
-  if (second < 10)
-    lcd.print("0");
-  lcd.print(String(second));
-}
+  lcd.print(second < 10 ? "0" + String(second) : String(second));
 
+  delay(100);
+}
