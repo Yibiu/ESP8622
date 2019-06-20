@@ -6,6 +6,8 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 // DS3231
 CDS3231 ds;
+byte year, month, date, dow, hour, minute, second;
+bool h12, PM;
 
 // KEYS
 #define KEY_MODE_PIN    2
@@ -29,10 +31,13 @@ int last_ok = HIGH;
 typedef enum _state
 {
   STATE_NORMAL = 0x00,
-  STATE_SETTING
+  STATE_SETTING,
+  STATE_DOING
 } state_t;
-state_t state;
+state_t state = STATE_NORMAL;
+byte unmasks = 0b00100000;
 
+////////////////////////////////////////////////////////
 // Scan keys
 int scan()
 {
@@ -78,6 +83,43 @@ int scan()
   return value;
 }
 
+////////////////////////////////////////////////////////
+// Date/Time format(the lowest three bits of mask are effective)
+String format_date(byte year, byte month, byte date, byte mask = 0b00000111)
+{
+  String year_str = "    ";
+  if (mask & 0b00000100) {
+    year_str = "20" + String(year);
+  }
+  String month_str = "  ";
+  if (mask & 0b00000010) {
+    month_str = month < 10 ? "0" + String(month) : String(month);
+  }
+  String date_str = "  ";
+  if (mask & 0b00000001) {
+    date_str = date < 10 ? "0" + String(date) : String(date);
+  }
+  return (year_str + "-" + month_str + "-" + date_str);
+}
+String format_time(byte hour, byte minute, byte second, byte mask = 0b00000111)
+{
+  String hour_str = "  ";
+  if (mask & 0b00000100) {
+    hour_str = hour < 10 ? "0" + String(hour) : String(hour);
+  }
+  String minute_str = "  ";
+  if (mask & 0b00000010) {
+    minute_str = minute < 10 ? "0" + String(minute_str) : String(minute_str);
+  }
+  String second_str = "  ";
+  if (mask & 0b00000001) {
+    second_str = second < 10 ? "0" + String(second_str) : String(second_str);
+  }
+  return (hour_str + ":" + minute_str + ":" + second_str);
+}
+
+
+////////////////////////////////////////////////////////
 void setup() {
   Wire.begin();
   lcd.begin(16, 2);
@@ -88,34 +130,30 @@ void setup() {
   pinMode(KEY_PLUS_PIN, INPUT_PULLUP);
   pinMode(KEY_MINUS_PIN, INPUT_PULLUP);
   pinMode(KEY_OK_PIN, INPUT_PULLUP);
-
-  state = STATE_NORMAL;
 }
 
+////////////////////////////////////////////////////////
 void loop() {
   if (STATE_NORMAL == state) {
-    byte year, month, date, dow, hour, minute, second;
-    bool h12, PM;
     ds.get_time(year, month, date, dow, h12, PM, hour, minute, second);
+    if (h12 && PM) {
+      hour = hour + 12;
+    }
 
     //lcd.clear();
     lcd.setCursor(0, 1);
-    lcd.print(hour < 10 ? "0" + String(hour) : String(hour));
-    lcd.print(":");
-    lcd.print(minute < 10 ? "0" + String(minute) : String(minute));
-    lcd.print(":");
-    lcd.print(second < 10 ? "0" + String(second) : String(second));
+    lcd.print(format_date(year, month, date));
+    lcd.setCursor(1, 1);
+    lcd.print(format_time(hour, minute, second));
 
-    Serial.print(hour < 10 ? "0" + String(hour) : String(hour));
-    Serial.print(":");
-    Serial.print(minute < 10 ? "0" + String(minute) : String(minute));
-    Serial.print(":");
-    Serial.print(second < 10 ? "0" + String(second) : String(second));
+    Serial.print(format_date(year, month, date));
+    Serial.print(" ");
+    Serial.print(format_time(hour, minute, second));
     Serial.println();
 
     if (KEY_MODE == scan()) {
       state = STATE_SETTING;
-      Serial.println("====>");
+      Serial.println("STATE_NORMAL ====> STATE_SETTING");
     }
 
     delay(200);
@@ -129,6 +167,10 @@ void loop() {
       break;
     case KEY_MODE:
       Serial.println("KEY_MODE");
+      unmasks = unmasks >> 1;
+      if (0b00000001 == unmasks) {
+        unmasks = 0b00100000;
+      }
       break;
     case KEY_PLUS:
       Serial.println("KEY_PLUS");
@@ -142,5 +184,12 @@ void loop() {
     default:
       break;
     }
+
+    byte masks = ((~unmasks) >> 3) & 0b00000111;
+    Serial.print(format_date(year, month, date, masks));
+    Serial.print(" ");
+    masks = (~unmasks) & 0b00000111;
+    Serial.print(format_time(hour, minute, second, masks));
+    Serial.println();
   }
 }
