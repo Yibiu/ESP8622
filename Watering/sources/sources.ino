@@ -5,6 +5,7 @@
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 // DS3231
+// 0~24 hours
 CDS3231 ds;
 byte year, month, date, dow, hour, minute, second;
 bool h12, PM;
@@ -36,6 +37,9 @@ typedef enum _state
 } state_t;
 state_t state = STATE_NORMAL;
 byte unmasks = 0b00100000;
+byte flashing = 1;
+
+int days_of_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 ////////////////////////////////////////////////////////
 // Scan keys
@@ -160,7 +164,7 @@ void loop() {
   }
   else if (STATE_SETTING == state) {
     int key = scan();
-
+    
     switch (key)
     {
     case KEY_NONE:
@@ -174,22 +178,126 @@ void loop() {
       break;
     case KEY_PLUS:
       Serial.println("KEY_PLUS");
+      switch (unmasks)
+      {
+      case 0b00100000: // year
+        year = year + 1;
+        if (year >= 100) {
+          year = 0;
+        }
+        break;
+      case 0b00010000: // month
+        month = month + 1;
+        if (month > 12) {
+          month = 1;
+        }
+        break;
+      case 0b00001000: // date
+        date = date + 1;
+		if (month == 2 && ((0 == year % 100 && 0 == year % 400) || (0 != year % 100 && 0 == year % 4))) {
+			if (date > days_of_month[month - 1] + 1) {
+				date = 1;
+			}
+		}
+		else {
+			if (date > days_of_month[month - 1]) {
+				date = 1;
+			}
+		}
+        break;
+      case 0b00000100: // hour
+		hour = hour + 1;
+		if (hour > 23) {
+			hour = 0;
+		}
+        break;
+      case 0b00000010: // minute
+		minute = minute + 1;
+		if (minute > 60) {
+			minute = 0;
+		}
+        break;
+      case 0b00000001: // second
+		second = second + 1;
+		if (second > 60) {
+			second = 0;
+		}
+        break;
+      default:
+        break;
+      }
       break;
     case KEY_MINUS:
       Serial.println("KEY_MINUS");
+      switch (unmasks)
+      {
+      case 0b00100000: // year
+        year = year - 1;
+        if (year <= 0) {
+          year = 99;
+        }
+        break;
+      case 0b00010000: // month
+        month = month - 1;
+        if (month < 1) {
+          month = 12;
+        }
+        break;
+      case 0b00001000: // date
+		date = date - 1;
+		if (date < 1) {
+			if (month == 2 && ((0 == year % 100 && 0 == year % 400) || (0 != year % 100 && 0 == year % 4))) {
+				date = days_of_month[month - 1] + 1;
+			}
+			else {
+				date = days_of_month[month - 1];
+			}
+		}
+        break;
+      case 0b00000100: // hour
+		hour = hour - 1;
+		if (hour < 0) {
+			hour = 23;
+		}
+        break;
+      case 0b00000010: // minute
+		minute = minute - 1;
+		if (minute < 0) {
+			minute = 60;
+		}
+        break;
+      case 0b00000001: // second
+		second = second - 1;
+		if (second < 0) {
+			second = 60;
+		}
+        break;
+      default:
+        break;
+      }
       break;
     case KEY_OK:
       Serial.println("KEY_OK");
+	  ds.set_year(year);
+	  ds.set_month(month);
+	  ds.set_date(date);
+	  ds.set_hour(hour);
+	  ds.set_minute(minute);
+	  ds.set_second(second);
+	  state = STATE_NORMAL;
       break;
     default:
       break;
     }
 
-    byte masks = ((~unmasks) >> 3) & 0b00000111;
+    byte masks = flashing ? 0b00000111 : (((~unmasks) >> 3) & 0b00000111);
     Serial.print(format_date(year, month, date, masks));
     Serial.print(" ");
-    masks = (~unmasks) & 0b00000111;
+    masks = flashing ? 0b00000111 : ((~unmasks) & 0b00000111);
     Serial.print(format_time(hour, minute, second, masks));
     Serial.println();
+	
+    flashing = !flashing;
+    delay(500);
   }
 }
