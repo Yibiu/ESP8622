@@ -1,4 +1,5 @@
 #include <LiquidCrystal.h>
+#include <Keypad.h>
 #include "DS3231.h"
 
 // LCD1602
@@ -11,22 +12,17 @@ byte year, month, date, dow, hour, minute, second;
 bool h12, PM;
 
 // KEYS
-#define KEY_MODE_PIN    2
-#define KEY_PLUS_PIN    3
-#define KEY_MINUS_PIN   4
-#define KEY_OK_PIN      5
-typedef enum _key
-{
-  KEY_NONE = 0x00,
-  KEY_MODE,
-  KEY_PLUS,
-  KEY_MINUS,
-  KEY_OK
-} key_t;
-int last_mode = HIGH;
-int last_plus = HIGH;
-int last_minus = HIGH;
-int last_ok = HIGH;
+const byte rows = 4;
+const byte cols = 4;
+char keys[rows][cols] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+byte row_pins[rows] = {2, 3, 4, 5};
+byte col_pins[cols] = {6, 7, 8, 9};
+Keypad keypad = Keypad(makeKeymap(keys), row_pins, col_pins, rows, cols);
 
 // State
 typedef enum _state
@@ -37,55 +33,10 @@ typedef enum _state
 } state_t;
 state_t state = STATE_NORMAL;
 byte unmasks = 0b00100000;
-byte flashing = 1;
+unsigned long time_ms = 0;
+bool flashing = true;
 
 int days_of_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-////////////////////////////////////////////////////////
-// Scan keys
-int scan()
-{
-  int value = KEY_NONE;
-  
-  int cur_mode = digitalRead(KEY_MODE_PIN);
-  int cur_plus = digitalRead(KEY_PLUS_PIN);
-  int cur_minus = digitalRead(KEY_MINUS_PIN);
-  int cur_ok = digitalRead(KEY_OK_PIN);
-  if (cur_mode != last_mode) {
-    delay(20);
-    cur_mode = digitalRead(KEY_MODE_PIN);
-    if (HIGH == last_mode && LOW == cur_mode) {
-      value = KEY_MODE;
-    }
-  }
-  else if (cur_plus != last_plus) {
-    delay(20);
-    cur_plus = digitalRead(KEY_PLUS_PIN);
-    if (HIGH == last_plus && LOW == cur_plus) {
-      value = KEY_PLUS;
-    }
-  }
-  else if (cur_minus != last_minus) {
-    delay(20);
-    cur_minus = digitalRead(KEY_MINUS_PIN);
-    if (HIGH == last_minus && LOW == cur_minus) {
-      value = KEY_MINUS;
-    }
-  }
-  else if (cur_ok != last_ok) {
-    delay(20);
-    cur_ok = digitalRead(KEY_OK_PIN);
-    if (HIGH == last_ok && LOW == cur_ok) {
-      value = KEY_OK;
-    }
-  }
-  last_mode = cur_mode;
-  last_plus = cur_plus;
-  last_minus = cur_minus;
-  last_ok = cur_ok;
-
-  return value;
-}
 
 ////////////////////////////////////////////////////////
 // Date/Time format(the lowest three bits of mask are effective)
@@ -93,7 +44,7 @@ String format_date(byte year, byte month, byte date, byte mask = 0b00000111)
 {
   String year_str = "    ";
   if (mask & 0b00000100) {
-    year_str = "20" + String(year);
+    year_str = year < 10 ? "200" + String(year) : "20" + String(year);
   }
   String month_str = "  ";
   if (mask & 0b00000010) {
@@ -113,11 +64,11 @@ String format_time(byte hour, byte minute, byte second, byte mask = 0b00000111)
   }
   String minute_str = "  ";
   if (mask & 0b00000010) {
-    minute_str = minute < 10 ? "0" + String(minute_str) : String(minute_str);
+    minute_str = minute < 10 ? "0" + String(minute) : String(minute);
   }
   String second_str = "  ";
   if (mask & 0b00000001) {
-    second_str = second < 10 ? "0" + String(second_str) : String(second_str);
+    second_str = second < 10 ? "0" + String(second) : String(second);
   }
   return (hour_str + ":" + minute_str + ":" + second_str);
 }
@@ -129,11 +80,6 @@ void setup() {
   lcd.begin(16, 2);
   lcd.print("hello world!");
   Serial.begin(9600);
-
-  pinMode(KEY_MODE_PIN, INPUT_PULLUP);
-  pinMode(KEY_PLUS_PIN, INPUT_PULLUP);
-  pinMode(KEY_MINUS_PIN, INPUT_PULLUP);
-  pinMode(KEY_OK_PIN, INPUT_PULLUP);
 }
 
 ////////////////////////////////////////////////////////
@@ -155,7 +101,9 @@ void loop() {
     Serial.print(format_time(hour, minute, second));
     Serial.println();
 
-    if (KEY_MODE == scan()) {
+    if ('1' == keypad.getKey()) {
+      unmasks = 0b00100000;
+      time_ms = millis();
       state = STATE_SETTING;
       Serial.println("STATE_NORMAL ====> STATE_SETTING");
     }
@@ -163,21 +111,19 @@ void loop() {
     delay(200);
   }
   else if (STATE_SETTING == state) {
-    int key = scan();
+    char key = keypad.getKey();
     
     switch (key)
     {
-    case KEY_NONE:
-      break;
-    case KEY_MODE:
-      Serial.println("KEY_MODE");
+    case '1':
+      Serial.println("1");
       unmasks = unmasks >> 1;
       if (0b00000001 == unmasks) {
         unmasks = 0b00100000;
       }
       break;
-    case KEY_PLUS:
-      Serial.println("KEY_PLUS");
+    case '2':
+      Serial.println("2");
       switch (unmasks)
       {
       case 0b00100000: // year
@@ -213,13 +159,13 @@ void loop() {
         break;
       case 0b00000010: // minute
 		minute = minute + 1;
-		if (minute > 60) {
+		if (minute > 59) {
 			minute = 0;
 		}
         break;
       case 0b00000001: // second
 		second = second + 1;
-		if (second > 60) {
+		if (second > 59) {
 			second = 0;
 		}
         break;
@@ -227,8 +173,8 @@ void loop() {
         break;
       }
       break;
-    case KEY_MINUS:
-      Serial.println("KEY_MINUS");
+    case '3':
+      Serial.println("3");
       switch (unmasks)
       {
       case 0b00100000: // year
@@ -263,21 +209,21 @@ void loop() {
       case 0b00000010: // minute
 		minute = minute - 1;
 		if (minute < 0) {
-			minute = 60;
+			minute = 59;
 		}
         break;
       case 0b00000001: // second
 		second = second - 1;
 		if (second < 0) {
-			second = 60;
+			second = 59;
 		}
         break;
       default:
         break;
       }
       break;
-    case KEY_OK:
-      Serial.println("KEY_OK");
+    case 'A':
+      Serial.println("A");
 	  ds.set_year(year);
 	  ds.set_month(month);
 	  ds.set_date(date);
@@ -296,8 +242,12 @@ void loop() {
     masks = flashing ? 0b00000111 : ((~unmasks) & 0b00000111);
     Serial.print(format_time(hour, minute, second, masks));
     Serial.println();
-	
-    flashing = !flashing;
-    delay(500);
+
+    if (millis() -  time_ms >= 500) {
+      flashing = !flashing;
+      time_ms = millis();
+    }
+
+    //delay(200);
   }
 }
