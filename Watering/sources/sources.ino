@@ -9,7 +9,8 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 // 0~24 hours
 CDS3231 ds;
 byte year, month, date, dow, hour, minute, second;
-bool h12, PM;
+bool dy, h12, PM, enable;
+byte alarm_bits;
 
 // KEYS
 const byte rows = 4;
@@ -28,16 +29,21 @@ Keypad keypad = Keypad(makeKeymap(keys), row_pins, col_pins, rows, cols);
 typedef enum _state
 {
   STATE_NORMAL = 0x00,
-  STATE_SETTING,
+  STATE_SET_TIME,
+  STATE_SET_ALARM1,
+  STATE_SET_ALARM2,
   STATE_DOING
 } state_t;
 state_t state = STATE_NORMAL;
-byte unmasks = 0b00100000;
+byte unmasks = 0b01000000;
 unsigned long time_ms = 0;
 bool flashing = true;
 
 int days_of_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+String dow_of_week[] = {"Mon", "Tues", "Wed", "Thur", "Fri", "Sat", "Sun"};
 
+
+////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 // Date/Time format(the lowest three bits of mask are effective)
 String format_date(byte year, byte month, byte date, byte mask = 0b00000111)
@@ -55,6 +61,15 @@ String format_date(byte year, byte month, byte date, byte mask = 0b00000111)
     date_str = date < 10 ? "0" + String(date) : String(date);
   }
   return (year_str + "-" + month_str + "-" + date_str);
+}
+String format_week(byte dow, byte mask = 0b00000001)
+{
+  if (mask & 0b00000001) {
+    return dow_of_week[dow];
+  }
+  else {
+    return "    ";
+  }
 }
 String format_time(byte hour, byte minute, byte second, byte mask = 0b00000111)
 {
@@ -74,6 +89,7 @@ String format_time(byte hour, byte minute, byte second, byte mask = 0b00000111)
 }
 
 
+////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 void setup() {
   Wire.begin();
@@ -98,47 +114,70 @@ void loop() {
 
     Serial.print(format_date(year, month, date));
     Serial.print(" ");
+    Serial.print(format_week(dow));
+    Serial.print(" ");
     Serial.print(format_time(hour, minute, second));
     Serial.println();
 
-    if ('1' == keypad.getKey()) {
-      unmasks = 0b00100000;
+    char key = keypad.getKey();
+    if ('1' == key) {
+      unmasks = 0b01000000;
       time_ms = millis();
-      state = STATE_SETTING;
-      Serial.println("STATE_NORMAL ====> STATE_SETTING");
+      state = STATE_SET_TIME;
+      Serial.println("STATE_NORMAL ====> STATE_SET_TIME");
+    }
+    else if ('4' == key) {
+      unmasks = 0b00001000;
+      time_ms = millis();
+
+      enable = ds.is_alarm_enabled(1);
+      ds.get_alarm1(date, hour, minute, second, alarm_bits, dy, h12, PM);
+      state = STATE_SET_ALARM1;
+      Serial.println("STATE_NORMAL ====> STATE_SET_ALARM1");
+    }
+    else if ('7' == key) {
+      unmasks = 0b00000100;
+      time_ms = millis();
+
+      enable = ds.is_alarm_enabled(2);
+      ds.get_alarm2(date, hour, minute, alarm_bits, dy, h12, PM);
+      state = STATE_SET_ALARM2;
+      Serial.println("STATE_NORMAL ====> STATE_SET_ALARM2");
     }
 
     delay(200);
   }
-  else if (STATE_SETTING == state) {
+  else if (STATE_SET_TIME == state) {
     char key = keypad.getKey();
     
     switch (key)
     {
     case '1':
       Serial.println("1");
-      unmasks = unmasks >> 1;
       if (0b00000001 == unmasks) {
-        unmasks = 0b00100000;
+        unmasks = 0b01000000;
+      }
+      else {
+        unmasks = unmasks >> 1;
       }
       break;
     case '2':
       Serial.println("2");
       switch (unmasks)
       {
-      case 0b00100000: // year
+      case 0b01000000: // year
         year = year + 1;
         if (year >= 100) {
           year = 0;
         }
         break;
-      case 0b00010000: // month
+      case 0b00100000: // month
         month = month + 1;
         if (month > 12) {
           month = 1;
         }
         break;
-      case 0b00001000: // date
+      case 0b00010000: // date
         date = date + 1;
 		if (month == 2 && ((0 == year % 100 && 0 == year % 400) || (0 != year % 100 && 0 == year % 4))) {
 			if (date > days_of_month[month - 1] + 1) {
@@ -151,6 +190,12 @@ void loop() {
 			}
 		}
         break;
+      case 0b00001000: // week
+      dow = dow + 1;
+      if (dow > 7) {
+        dow = 1;
+      }
+      break;
       case 0b00000100: // hour
 		hour = hour + 1;
 		if (hour > 23) {
@@ -177,20 +222,24 @@ void loop() {
       Serial.println("3");
       switch (unmasks)
       {
-      case 0b00100000: // year
-        year = year - 1;
-        if (year <= 0) {
+      case 0b01000000: // year
+        if (0 == year) {
           year = 99;
         }
-        break;
-      case 0b00010000: // month
-        month = month - 1;
-        if (month < 1) {
-          month = 12;
+        else {
+          year = year - 1;
         }
         break;
-      case 0b00001000: // date
-		date = date - 1;
+      case 0b00100000: // month
+        if (1 == month) {
+          month = 12;
+        }
+        else {
+          month = month - 1;
+        }
+        break;
+      case 0b00010000: // date
+      if (1 == date) {
 		if (date < 1) {
 			if (month == 2 && ((0 == year % 100 && 0 == year % 400) || (0 != year % 100 && 0 == year % 4))) {
 				date = days_of_month[month - 1] + 1;
@@ -199,24 +248,42 @@ void loop() {
 				date = days_of_month[month - 1];
 			}
 		}
+      }
+      else {
+        date = date - 1;
+      }
         break;
+      case 0b00001000: // week
+      if (1 == dow) {
+        dow = 7;
+      }
+      else {
+        dow = dow - 1;
+      }
+      break;
       case 0b00000100: // hour
-		hour = hour - 1;
-		if (hour < 0) {
-			hour = 23;
-		}
+      if (0 == hour) {
+        hour = 23;
+      }
+      else {
+		    hour = hour - 1;
+      }
         break;
       case 0b00000010: // minute
-		minute = minute - 1;
-		if (minute < 0) {
-			minute = 59;
-		}
+      if (0 == minute) {
+        minute = 59;
+      }
+      else {
+		    minute = minute - 1;
+      }
         break;
       case 0b00000001: // second
-		second = second - 1;
-		if (second < 0) {
-			second = 59;
-		}
+      if (0 == second) {
+        second = 59;
+      }
+      else {
+		    second = second - 1;
+      }
         break;
       default:
         break;
@@ -227,6 +294,7 @@ void loop() {
 	  ds.set_year(year);
 	  ds.set_month(month);
 	  ds.set_date(date);
+    ds.set_dow(dow);
 	  ds.set_hour(hour);
 	  ds.set_minute(minute);
 	  ds.set_second(second);
@@ -236,8 +304,11 @@ void loop() {
       break;
     }
 
-    byte masks = flashing ? 0b00000111 : (((~unmasks) >> 3) & 0b00000111);
+    byte masks = flashing ? 0b00000111 : (((~unmasks) >> 4) & 0b00000111);
     Serial.print(format_date(year, month, date, masks));
+    Serial.print(" ");
+    masks = flashing ? 0b00000001 : (((~unmasks) >> 3) & 0b00000001);
+    Serial.print(format_week(dow, masks));
     Serial.print(" ");
     masks = flashing ? 0b00000111 : ((~unmasks) & 0b00000111);
     Serial.print(format_time(hour, minute, second, masks));
@@ -247,7 +318,185 @@ void loop() {
       flashing = !flashing;
       time_ms = millis();
     }
+  }
+  else if (STATE_SET_ALARM1 == state) {
+    String str = enable ? "enable" : "disable";
+    Serial.println("ALARM1: " + String(hour) + ":" + String(minute) + ":" + String(second)
+      + " " + str);
+    
+    if (ds.is_alarming(1)) {
+      Serial.println("ALARM1");
+    }
 
-    //delay(200);
+    char key = keypad.getKey();
+    switch (key)
+    {
+    case '4':
+      if (0b00000001 == unmasks) {
+        unmasks = 0b00001000;
+      }
+      else {
+        unmasks = unmasks >> 1;
+      }
+      break;
+    case '5':
+      switch (unmasks)
+      {
+      case 0b00001000: // hour
+        hour = hour + 1;
+        if (hour > 23) {
+          hour = 0;
+        }
+        break;
+      case 0b00000100: // minute
+        minute = minute + 1;
+        if (minute > 59) {
+          minute = 0;
+        }
+        break;
+      case 0b00000010: // second
+        second = second + 1;
+        if (second > 59) {
+          second = 0;
+        }
+        break;
+      case 0b00000001: // enable
+        enable = !enable;
+        break;
+      default:
+        break;
+      }
+      break;
+    case '6':
+      switch (unmasks)
+      {
+      case 0b00001000: // hour
+        if (0 == hour) {
+          hour = 23;
+        }
+        else {
+          hour = hour - 1;
+        }
+        break;
+      case 0b00000100: // minute
+        if (0 == minute) {
+          minute = 59;
+        }
+        else {
+          minute = minute - 1;
+        }
+        break;
+      case 0b00000010: // second
+        if (0 == second) {
+          second = 59;
+        }
+        else {
+          second = second - 1;
+        }
+        break;
+      case 0b00000001: // enable
+        enable = !enable;
+        break;
+      default:
+        break;
+      }
+      break;
+    case 'B':
+      alarm_bits = 0b00001000;
+      ds.set_alarm1(date, hour, minute, second, alarm_bits, false, false);
+      if (enable) {
+        ds.turn_on_alarm(1);
+      }
+      else {
+        ds.turn_off_alarm(1);
+      }
+      state = STATE_NORMAL;
+      break;
+    default:
+      break;
+    }
+  }
+  else if (STATE_SET_ALARM2 == state) {
+    String str = enable ? "enable" : "disable";
+    Serial.println("ALARM2: " + String(hour) + ":" + String(minute)
+      + " " + str);
+    
+    if (ds.is_alarming(2)) {
+      Serial.println("ALARM2");
+    }
+
+    char key = keypad.getKey();
+    switch (key)
+    {
+    case '7':
+      if (0b00000001 == unmasks) {
+        unmasks = 0b00000100;
+      }
+      else {
+        unmasks = unmasks >> 1;
+      }
+      break;
+    case '8':
+      switch (unmasks)
+      {
+      case 0b00000100: // hour
+        hour = hour + 1;
+        if (hour > 23) {
+          hour = 0;
+        }
+        break;
+      case 0b00000010: // minute
+        minute = minute + 1;
+        if (minute > 59) {
+          minute = 0;
+        }
+        break;
+      case 0b00000001: // enable
+        enable = !enable;
+        break;
+      default:
+        break;
+      }
+      break;
+    case '9':
+      switch (unmasks)
+      {
+      case 0b00000100: // hour
+        if (0 == hour) {
+          hour = 23;
+        }
+        else {
+          hour = hour - 1;
+        }
+        break;
+      case 0b00000010: // minute
+        if (0 == minute) {
+          minute = 59;
+        }
+        else {
+          minute = minute - 1;
+        }
+        break;
+      case 0b00000001: // enable
+        enable = !enable;
+        break;
+      default:
+        break;
+      }
+      break;
+    case 'C':
+      alarm_bits = 0b00000100;
+      ds.set_alarm2(date, hour, minute, alarm_bits, false, false);
+      if (enable) {
+        ds.turn_on_alarm(2);
+      }
+      else {
+        ds.turn_off_alarm(2);
+      }
+      state = STATE_NORMAL;
+      break;
+    default:
+      break;
+    }
   }
 }
