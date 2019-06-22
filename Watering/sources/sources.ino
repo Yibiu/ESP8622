@@ -148,6 +148,13 @@ void loop() {
 			Serial.println("STATE_NORMAL ====> STATE_SET_ALARM2");
 		}
 
+		if (ds.is_alarming(1, true)) {
+			Serial.println("=====> ALARM1");
+		}
+		if (ds.is_alarming(2, true)) {
+			Serial.println("=====> ALARM2");
+		}
+
 		delay(200);
 	}
 	else if (STATE_SET_TIME == state) {
