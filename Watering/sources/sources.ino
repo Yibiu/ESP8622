@@ -3,7 +3,7 @@
 #include "DS3231.h"
 
 // LCD1602
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+LiquidCrystal lcd(9, 8, 4, 5, 6, 7);
 
 // DS3231
 // 0~24 hours
@@ -21,8 +21,8 @@ char keys[rows][cols] = {
 	{'7', '8', '9', 'C'},
 	{'*', '0', '#', 'D'}
 };
-byte row_pins[rows] = {2, 3, 4, 5};
-byte col_pins[cols] = {6, 7, 8, 9};
+byte row_pins[rows] = {10, 11, 12, A1};
+byte col_pins[cols] = {A0, 13, A2, A3};
 Keypad keypad = Keypad(makeKeymap(keys), row_pins, col_pins, rows, cols);
 
 // State
@@ -95,7 +95,7 @@ void setup() {
 	Wire.begin();
 	lcd.begin(16, 2);
 	lcd.print("");
-	Serial.begin(9600);
+	//Serial.begin(9600);
 }
 
 ////////////////////////////////////////////////////////
@@ -106,18 +106,20 @@ void loop() {
 			hour = hour + 12;
 		}
 
-		//lcd.clear();
-		lcd.setCursor(0, 1);
+		lcd.clear();
+		lcd.setCursor(0, 0);
 		lcd.print(format_date(year, month, date));
-		lcd.setCursor(1, 1);
+		lcd.print(" ");
+		lcd.print(format_week(week - 1));
+		lcd.setCursor(0, 1);
 		lcd.print(format_time(hour, minute, second));
 
-		Serial.print(format_date(year, month, date));
-		Serial.print(" ");
-		Serial.print(format_week(week - 1));
-		Serial.print(" ");
-		Serial.print(format_time(hour, minute, second));
-		Serial.println();
+		//Serial.print(format_date(year, month, date));
+		//Serial.print(" ");
+		//Serial.print(format_week(week - 1));
+		//Serial.print(" ");
+		//Serial.print(format_time(hour, minute, second));
+		//Serial.println();
 
 		char key = keypad.getKey();
 		if ('1' == key) {
@@ -125,7 +127,7 @@ void loop() {
 			time_ms = millis();
 			
 			state = STATE_SET_TIME;
-			Serial.println("STATE_NORMAL ====> STATE_SET_TIME");
+			//Serial.println("STATE_NORMAL ====> STATE_SET_TIME");
 		}
 		else if ('4' == key) {
 			unmasks = 0b00001000;
@@ -135,7 +137,7 @@ void loop() {
 			ds.get_alarm1(date, hour, minute, second, alarm_bits, dy, h12, PM);
 			
 			state = STATE_SET_ALARM1;
-			Serial.println("STATE_NORMAL ====> STATE_SET_ALARM1");
+			//Serial.println("STATE_NORMAL ====> STATE_SET_ALARM1");
 		}
 		else if ('7' == key) {
 			unmasks = 0b00000100;
@@ -145,14 +147,14 @@ void loop() {
 			ds.get_alarm2(date, hour, minute, alarm_bits, dy, h12, PM);
 
 			state = STATE_SET_ALARM2;
-			Serial.println("STATE_NORMAL ====> STATE_SET_ALARM2");
+			//Serial.println("STATE_NORMAL ====> STATE_SET_ALARM2");
 		}
 
 		if (ds.is_alarming(1, true)) {
-			Serial.println("=====> ALARM1");
+			//Serial.println("=====> ALARM1");
 		}
 		if (ds.is_alarming(2, true)) {
-			Serial.println("=====> ALARM2");
+			//Serial.println("=====> ALARM2");
 		}
 
 		delay(200);
@@ -302,19 +304,28 @@ void loop() {
 			ds.set_second(second);
 			state = STATE_NORMAL;
 			break;
+		case 'D':
+			state = STATE_NORMAL;
+			break;
 		default:
 			break;
 		}
 
 		byte masks = flashing ? 0b00000111 : (((~unmasks) >> 4) & 0b00000111);
-		Serial.print(format_date(year, month, date, masks));
-		Serial.print(" ");
+		lcd.setCursor(0, 0);
+		lcd.print(format_date(year, month, date, masks));
+		lcd.print(" ");
+		//Serial.print(format_date(year, month, date, masks));
+		//Serial.print(" ");
 		masks = flashing ? 0b00000001 : (((~unmasks) >> 3) & 0b00000001);
-		Serial.print(format_week(week - 1, masks));
-		Serial.print(" ");
+		lcd.print(format_week(week - 1, masks));
+		//Serial.print(format_week(week - 1, masks));
+		//Serial.print(" ");
 		masks = flashing ? 0b00000111 : ((~unmasks) & 0b00000111);
-		Serial.print(format_time(hour, minute, second, masks));
-		Serial.println();
+		lcd.setCursor(0, 1);
+		lcd.print(format_time(hour, minute, second, masks));
+		//Serial.print(format_time(hour, minute, second, masks));
+		//Serial.println();
 
 		if (millis() -  time_ms >= 500) {
 			flashing = !flashing;
@@ -325,7 +336,8 @@ void loop() {
 	}
 	else if (STATE_SET_ALARM1 == state) {
 		String str = enable ? "enable" : "disable";
-		Serial.println("ALARM1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
+		lcd.println("ALARM1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
+		//Serial.println("ALARM1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
 
 		char key = keypad.getKey();
 		switch (key)
@@ -411,6 +423,9 @@ void loop() {
 			}
 			state = STATE_NORMAL;
 			break;
+		case 'D':
+			state = STATE_NORMAL;
+			break;
 		default:
 			break;
 		}
@@ -419,7 +434,8 @@ void loop() {
 	}
 	else if (STATE_SET_ALARM2 == state) {
 		String str = enable ? "enable" : "disable";
-		Serial.println("ALARM2: " + String(hour) + ":" + String(minute) + " " + str);
+		lcd.println("ALARM2: " + String(hour) + ":" + String(minute) + " " + str);
+		//Serial.println("ALARM2: " + String(hour) + ":" + String(minute) + " " + str);
 
 		char key = keypad.getKey();
 		switch (key)
@@ -489,6 +505,9 @@ void loop() {
 			else {
 				ds.turn_off_alarm(2);
 			}
+			state = STATE_NORMAL;
+			break;
+		case 'D':
 			state = STATE_NORMAL;
 			break;
 		default:
