@@ -25,6 +25,10 @@ byte row_pins[rows] = {10, 11, 12, A1};
 byte col_pins[cols] = {A0, 13, A2, A3};
 Keypad keypad = Keypad(makeKeymap(keys), row_pins, col_pins, rows, cols);
 
+// Motor
+#define MOTOR_PIN		(A7)
+int motor_tick = 0;
+
 // State
 typedef enum _state
 {
@@ -96,6 +100,9 @@ void setup() {
 	lcd.begin(16, 2);
 	lcd.print("");
 	//Serial.begin(9600);
+
+	pinMode(MOTOR_PIN, OUTPUT);
+	digitalWrite(MOTOR_PIN, LOW);
 }
 
 ////////////////////////////////////////////////////////
@@ -122,14 +129,14 @@ void loop() {
 		//Serial.println();
 
 		char key = keypad.getKey();
-		if ('1' == key) {
+		if ('A' == key) {
 			unmasks = 0b01000000;
 			time_ms = millis();
 			
 			state = STATE_SET_TIME;
 			//Serial.println("STATE_NORMAL ====> STATE_SET_TIME");
 		}
-		else if ('4' == key) {
+		else if ('B' == key) {
 			unmasks = 0b00001000;
 			time_ms = millis();
 
@@ -139,7 +146,7 @@ void loop() {
 			state = STATE_SET_ALARM1;
 			//Serial.println("STATE_NORMAL ====> STATE_SET_ALARM1");
 		}
-		else if ('7' == key) {
+		else if ('C' == key) {
 			unmasks = 0b00000100;
 			time_ms = millis();
 
@@ -152,9 +159,13 @@ void loop() {
 
 		if (ds.is_alarming(1, true)) {
 			//Serial.println("=====> ALARM1");
+			motor_tick = 0;
+			state = STATE_DOING;
 		}
 		if (ds.is_alarming(2, true)) {
 			//Serial.println("=====> ALARM2");
+			motor_tick = 0;
+			state = STATE_DOING;
 		}
 
 		delay(200);
@@ -164,7 +175,7 @@ void loop() {
     
 		switch (key)
 		{
-		case '1':
+		case 'A':
 			if (0b00000001 == unmasks) {
 				unmasks = 0b01000000;
 			}
@@ -172,7 +183,7 @@ void loop() {
 				unmasks = unmasks >> 1;
 			}
 			break;
-		case '2':
+		case '1':
 			switch (unmasks)
 			{
 			case 0b01000000: // year
@@ -294,7 +305,7 @@ void loop() {
 				break;
 			}
 			break;
-		case 'A':
+		case '#':
 			ds.set_year(year);
 			ds.set_month(month);
 			ds.set_date(date);
@@ -304,7 +315,7 @@ void loop() {
 			ds.set_second(second);
 			state = STATE_NORMAL;
 			break;
-		case 'D':
+		case '*':
 			state = STATE_NORMAL;
 			break;
 		default:
@@ -339,7 +350,7 @@ void loop() {
 
 		switch (key)
 		{
-		case '4':
+		case 'B':
 			if (0b00000001 == unmasks) {
 				unmasks = 0b00001000;
 			}
@@ -347,7 +358,7 @@ void loop() {
 				unmasks = unmasks >> 1;
 			}
 			break;
-		case '5':
+		case '4':
 			switch (unmasks)
 			{
 			case 0b00001000: // hour
@@ -409,7 +420,7 @@ void loop() {
 				break;
 			}
 			break;
-		case 'B':
+		case '#':
 			alarm_bits = 0b00001000;
 			ds.set_alarm1(date, hour, minute, second, alarm_bits, false, false);
 			if (enable) {
@@ -420,7 +431,7 @@ void loop() {
 			}
 			state = STATE_NORMAL;
 			break;
-		case 'D':
+		case '*':
 			state = STATE_NORMAL;
 			break;
 		default:
@@ -440,7 +451,7 @@ void loop() {
 
 		switch (key)
 		{
-		case '7':
+		case 'C':
 			if (0b00000001 == unmasks) {
 				unmasks = 0b00000100;
 			}
@@ -448,7 +459,7 @@ void loop() {
 				unmasks = unmasks >> 1;
 			}
 			break;
-		case '8':
+		case '7':
 			switch (unmasks)
 			{
 			case 0b00000100: // hour
@@ -496,7 +507,7 @@ void loop() {
 				break;
 			}
 			break;
-		case 'C':
+		case '#':
 			alarm_bits = 0b00000100;
 			ds.set_alarm2(date, hour, minute, alarm_bits, false, false);
 			if (enable) {
@@ -507,7 +518,7 @@ void loop() {
 			}
 			state = STATE_NORMAL;
 			break;
-		case 'D':
+		case '*':
 			state = STATE_NORMAL;
 			break;
 		default:
@@ -523,9 +534,12 @@ void loop() {
 		// delay(200);
 	}
 	else if (STATE_DOING == state) {
-		// TODO
-		// ...
-		
-		// delay(200);
+		digitalWrite(MOTOR_PIN, HIGH);
+		delay(1000);
+
+		motor_tick++;
+		if (20 == motor_tick) {
+			state = STATE_NORMAL;
+		}
 	}
 }
