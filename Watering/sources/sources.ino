@@ -335,11 +335,8 @@ void loop() {
 		// delay(200);
 	}
 	else if (STATE_SET_ALARM1 == state) {
-		String str = enable ? "enable" : "disable";
-		lcd.println("ALARM1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
-		//Serial.println("ALARM1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
-
 		char key = keypad.getKey();
+
 		switch (key)
 		{
 		case '4':
@@ -430,14 +427,17 @@ void loop() {
 			break;
 		}
 
+		String str = enable ? "ON" : "OFF";
+		lcd.clear();
+		lcd.setCursor(0, 0);
+		lcd.println("A1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
+		//Serial.println("A1: " + String(hour) + ":" + String(minute) + ":" + String(second) + " " + str);
+
 		// delay(200);
 	}
 	else if (STATE_SET_ALARM2 == state) {
-		String str = enable ? "enable" : "disable";
-		lcd.println("ALARM2: " + String(hour) + ":" + String(minute) + " " + str);
-		//Serial.println("ALARM2: " + String(hour) + ":" + String(minute) + " " + str);
-
 		char key = keypad.getKey();
+
 		switch (key)
 		{
 		case '7':
@@ -514,6 +514,12 @@ void loop() {
 			break;
 		}
 
+		String str = enable ? "ON" : "OFF";
+		lcd.clear();
+		lcd.setCursor(0, 0);
+		lcd.println("A2: " + String(hour) + ":" + String(minute) + " " + str);
+		//Serial.println("A2: " + String(hour) + ":" + String(minute) + " " + str);
+		
 		// delay(200);
 	}
 	else if (STATE_DOING == state) {
